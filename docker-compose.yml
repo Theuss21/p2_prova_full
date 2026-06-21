@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------
+  # Backend (já desenvolvido na atividade anterior)
+  # Ajuste o "context" abaixo se a pasta do backend no seu repositório
+  # tiver outro nome/local.
+  # ---------------------------------------------------------------------
+  api:
+    build:
+      context: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      - DB_SQL_URL=postgres://user:password@postgres:5432/db_relacional
+      - DB_NOSQL_URL=mongodb://mongo:27017/db_nosql
+      - JWT_SECRET=${JWT_SECRET:-super_secret_key_123}
+      - PORT=3000
+    depends_on:
+      - postgres
+      - mongo
+    networks:
+      - app-network
+
+  postgres:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: db_relacional
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - app-network
+
+  # ---------------------------------------------------------------------
+  # Frontend (React + Tailwind, servido via Nginx)
+  # ---------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "8080:80"
+    environment:
+      # URL pela qual o NAVEGADOR do usuário acessa a API — não é a URL
+      # interna da rede Docker (api:3000), pois quem chama a API é o
+      # browser do cliente, fora da rede de containers.
+      - API_URL=${FRONTEND_API_URL:-http://localhost:3000}
+    depends_on:
+      - api
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:
