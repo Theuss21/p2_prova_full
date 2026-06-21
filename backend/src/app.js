@@ -34,9 +34,12 @@ app.get('/', (req, res) => {
 // Inicialização segura
 const startServer = async () => {
   try {
+    // SQL
     await sequelize.authenticate();
+    await sequelize.sync();
     console.log('PostgreSQL conectado com sucesso.');
 
+    // NoSQL
     await connectNoSQL();
 
     const PORT = process.env.PORT || 3000;
@@ -51,7 +54,7 @@ const startServer = async () => {
   }
 };
 
-// Evita subir servidor durante os testes
+// Evita subir servidor automaticamente em testes
 if (require.main === module) {
   startServer();
 }
